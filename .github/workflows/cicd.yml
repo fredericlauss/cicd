@@ -1,6 +1,9 @@
 name: CI/CD
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -19,7 +22,7 @@ jobs:
       - run: npm run build
 
   test:
-    if: github.ref => 'refs/reads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -40,10 +43,10 @@ jobs:
           start: npm run start
           browser: chrome
 
-	deploy:
+  deploy:
     runs-on: ubuntu-latest
-    if: github.ref_name == 'main'
-    needs: [ test]
+    if: github.ref == 'refs/heads/main'
+    needs: [test]
     steps:
       - uses: webfactory/ssh-agent@v0.5.4
         with:
