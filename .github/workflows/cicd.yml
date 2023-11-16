@@ -39,16 +39,11 @@ jobs:
           build: npm run build
           start: npm run start
           browser: chrome
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: cypress-videos
-          path: cypress/videos
 
-	deploy-image:
+	deploy:
     runs-on: ubuntu-latest
     if: github.ref_name == 'main'
-    needs: [build-and-push-image, test]
+    needs: [ test]
     steps:
       - uses: webfactory/ssh-agent@v0.5.4
         with:
