@@ -1,12 +1,56 @@
-name: CI / CD 
+name: CI/CD
+
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run: ls -lah
       - uses: actions/checkout@v4
+      - name: Cache node_modules
+        id: cache-node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            /home/runner/.cache/Cypress
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }}
       - run: npm ci
       - run: npm run build
+
+  test:
+    if: github.ref => 'refs/reads/main'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache node_modules
+        id: cache-node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            /home/runner/.cache/Cypress
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }}
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          build: npm run build
+          start: npm run start
+          browser: chrome
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+
+	deploy-image:
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main'
+    needs: [build-and-push-image, test]
+    steps:
+      - uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
       - run: ls -lah
-  # test:
